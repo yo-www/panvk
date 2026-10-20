@@ -71,6 +71,12 @@ jobs:
           python3 -m pip install --break-system-packages \
             'meson>=1.4.0,<2'
 
+      - name: Enable CSF archs (12 = Immortalis G925) for kbase
+        run: |
+          grep -n "^foreach arch" src/panfrost/vulkan/meson.build
+          sed -i 's/^foreach arch : \[6, 7, 9\]$/foreach arch : [6, 7, 9, 10, 12]/' src/panfrost/vulkan/meson.build
+          grep -n "^foreach arch" src/panfrost/vulkan/meson.build
+
       - name: Configure
         run: |
           meson setup "${BUILD_DIR}" \
