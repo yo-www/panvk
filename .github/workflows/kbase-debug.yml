@@ -1,5 +1,5 @@
 ---
-name: PanVK kbase v70 build (glibc, no clc)
+name: PanVK kbase v70 glibc
 
 'on':
   push:
@@ -81,9 +81,9 @@ jobs:
             -Dglx=disabled \
             -Dllvm=enabled \
             -Dopengl=false \
-            -Dgallium-rusticl=false \
-            -Dclc=disabled \
+            -Dmesa-clc=disabled \
             -Dmicrosoft-clc=disabled \
+            -Dgallium-rusticl=false \
             -Dpanfrost-kmds=kbase,panthor \
             -Dplatforms=wayland \
             -Dvalgrind=disabled \
