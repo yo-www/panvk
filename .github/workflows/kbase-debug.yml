@@ -36,6 +36,7 @@ jobs:
             libelf-dev \
             libexpat1-dev \
             libclang-cpp-dev \
+            clang \
             libclang-dev \
             libwayland-dev \
             libwayland-egl-backend-dev \
@@ -71,6 +72,9 @@ jobs:
           grep -n "if false" src/compiler/clc/meson.build | head -3
 
       - name: Configure
+        env:
+          CC: clang
+          CXX: clang++
         run: |
           meson setup "${BUILD_DIR}" \
             --buildtype=debug \
@@ -96,6 +100,9 @@ jobs:
             -Dzstd=disabled
 
       - name: Build
+        env:
+          CC: clang
+          CXX: clang++
         run: meson compile -C "${BUILD_DIR}" -j "$(nproc)"
 
       - name: Install
