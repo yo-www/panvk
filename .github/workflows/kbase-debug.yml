@@ -71,6 +71,12 @@ jobs:
           sed -i "s/^if dep_llvm.version().version_compare('>= 17.0') and not has_spirv_link_workaround$/if false/" src/compiler/clc/meson.build
           grep -n "if false" src/compiler/clc/meson.build | head -3
 
+      - name: Provide liblog shim (Android-only dep)
+        run: |
+          printf 'void __android_log_print(int p, const char *t, const char *f, ...) {}\nvoid __android_log_write(int p, const char *t, const char *m) {}\n' > /tmp/log.c
+          clang -shared -fPIC -o /usr/lib/aarch64-linux-gnu/liblog.so /tmp/log.c
+          ldconfig
+
       - name: Configure
         env:
           CC: clang
