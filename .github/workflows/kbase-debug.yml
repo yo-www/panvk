@@ -1,5 +1,5 @@
 ---
-name: PanVK kbase debug Mesa
+name: PanVK kbase v70 build (glibc)
 
 'on':
   push:
