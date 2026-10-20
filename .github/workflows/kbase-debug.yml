@@ -73,9 +73,10 @@ jobs:
 
       - name: Enable CSF archs (12 = Immortalis G925) for kbase
         run: |
-          grep -n "^foreach arch" src/panfrost/vulkan/meson.build
           sed -i 's/^foreach arch : \[6, 7, 9\]$/foreach arch : [6, 7, 9, 10, 12]/' src/panfrost/vulkan/meson.build
           grep -n "^foreach arch" src/panfrost/vulkan/meson.build
+          python3 -c "f='src/panfrost/vulkan/panvk_macros.h';s=open(f).read();c12='      case 12: ret = panvk_arch_name(name, v12)(__VA_ARGS__); break;\n';c10='      case 10: ret = panvk_arch_name(name, v10)(__VA_ARGS__); break;\n';s=s if 'case 12:' in s else s.replace('      default:',c10+c12+'      default:',1);open(f,'w').write(s);print('patched', 'case 12:' in open(f).read())"
+          grep -n "case 1[02]" src/panfrost/vulkan/panvk_macros.h
 
       - name: Configure
         run: |
