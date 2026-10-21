@@ -45,3 +45,40 @@ def patch_meson(path):
 
 patch_meson('src/panfrost/vulkan/meson.build')
 patch_macros('src/panfrost/vulkan/panvk_macros.h')
+
+# --- arch 推导兜底 + 诊断 ---
+def patch_pan_arch(path):
+    s = open(path).read()
+    if 'MTK_KBASE_ARCH_FALLBACK' in s:
+        print('pan_model.h: already patched')
+        return
+    old = '''   default:
+      return PAN_ARCH_MAJOR(gpu_id);
+   }
+}'''
+    new = '''   default:
+      break;
+   }
+
+   unsigned arch = PAN_ARCH_MAJOR(gpu_id);
+   /* MTK_KBASE_ARCH_FALLBACK: kbase on MT6991 reports a legacy-format gpu_id,
+    * arch major encodes to 0. Map by product id instead. */
+   if (arch == 0 || arch == 15) {
+      unsigned prod = MIDGARD_PROD_ID(gpu_id);
+      if (prod == 0x0d08 || prod == 0x0d00)
+         arch = 12;
+      fprintf(stderr, "PANVK-DEBUG: gpu_id=0x%08llx prod=0x%04x -> arch=%u\\n",
+              (unsigned long long)gpu_id, prod, arch);
+   }
+   return arch;
+}'''
+    if old not in s:
+        print('pan_model.h: PATTERN NOT FOUND')
+        return
+    s = s.replace(old, new, 1)
+    if '#include <stdio.h>' not in s:
+        s = s.replace('#define PAN_ARCH_MAJOR', '#include <stdio.h>\n\n#define PAN_ARCH_MAJOR', 1)
+    open(path, 'w').write(s)
+    print('pan_model.h: patched')
+
+patch_pan_arch('src/panfrost/model/pan_model.h')
