@@ -108,3 +108,24 @@ def patch_force_arch(path):
     print('physical_device.c: patched, %d sites' % n)
 
 patch_force_arch('src/panfrost/vulkan/panvk_physical_device.c')
+
+# --- 宏内 arch 归一化：未知 arch 一律按 12 ---
+def patch_macro_normalize(path):
+    s = open(path).read()
+    if 'PANVK_ARCH_NORMALIZE' in s:
+        print('macros: already patched'); return
+    old = '      switch (arch) {'
+    new = '      switch (PANVK_ARCH_NORMALIZE(arch)) {'
+    n = s.count(old)
+    if n == 0:
+        print('macros: PATTERN NOT FOUND'); return
+    s = s.replace(old, new)
+    helper = '''#define PANVK_ARCH_NORMALIZE(a)                                                \\
+   (((a) == 6 || (a) == 7 || (a) == 9 || (a) == 10 || (a) == 12) ? (a) : 12)
+
+'''
+    s = s.replace('#define panvk_arch_dispatch(', helper + '#define panvk_arch_dispatch(', 1)
+    open(path, 'w').write(s)
+    print('macros: normalized %d switches' % n)
+
+patch_macro_normalize('src/panfrost/vulkan/panvk_macros.h')
