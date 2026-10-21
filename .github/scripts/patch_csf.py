@@ -129,3 +129,19 @@ def patch_macro_normalize(path):
     print('macros: normalized %d switches' % n)
 
 patch_macro_normalize('src/panfrost/vulkan/panvk_macros.h')
+
+# --- kbase: 提高 CS 寄存器文件大小（arch>=12 需要更多寄存器）---
+def patch_cs_regs(path):
+    s = open(path).read()
+    if 'PANVK_CS_REGS_BUMP' in s:
+        print('kbase_kmod.c: already patched'); return
+    old = '      .cs_reg_count = 96,'
+    new = '''      /* PANVK_CS_REGS_BUMP: arch>=12 (G720/G725 and later) register
+       * files are larger than the 96 the panthor path assumes. */
+      .cs_reg_count = 256,'''
+    if old not in s:
+        print('kbase_kmod.c: PATTERN NOT FOUND'); return
+    open(path, 'w').write(s.replace(old, new, 1))
+    print('kbase_kmod.c: cs_reg_count -> 256')
+
+patch_cs_regs('src/panfrost/lib/kmod/kbase_kmod.c')
