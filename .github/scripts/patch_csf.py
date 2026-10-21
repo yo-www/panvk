@@ -82,3 +82,29 @@ def patch_pan_arch(path):
     print('pan_model.h: patched')
 
 patch_pan_arch('src/panfrost/model/pan_model.h')
+
+# --- 强制 arch 兜底（诊断 + 强制 12）---
+def patch_force_arch(path):
+    s = open(path).read()
+    if 'PANVK_FORCE_ARCH' in s:
+        print('physical_device.c: already patched'); return
+    old = '   unsigned arch = pan_arch(device->kmod.dev->props.gpu_id);'
+    new = '''   unsigned arch = pan_arch(device->kmod.dev->props.gpu_id);
+   /* PANVK_FORCE_ARCH */
+   fprintf(stderr, "PANVK-DEBUG: arch=%u gpu_id=0x%08llx prod=0x%04x\\n", arch,
+           (unsigned long long)device->kmod.dev->props.gpu_id,
+           (unsigned)((device->kmod.dev->props.gpu_id >> 16) & 0xffff));
+   if (arch != 6 && arch != 7 && arch != 9 && arch != 10 && arch != 12) {
+      fprintf(stderr, "PANVK-DEBUG: forcing arch 12\\n");
+      arch = 12;
+   }'''
+    n = s.count(old)
+    if n == 0:
+        print('physical_device.c: PATTERN NOT FOUND'); return
+    s = s.replace(old, new)
+    if '#include <stdio.h>' not in s:
+        s = s.replace('#include <stdint.h>', '#include <stdint.h>\n#include <stdio.h>', 1)
+    open(path, 'w').write(s)
+    print('physical_device.c: patched, %d sites' % n)
+
+patch_force_arch('src/panfrost/vulkan/panvk_physical_device.c')
